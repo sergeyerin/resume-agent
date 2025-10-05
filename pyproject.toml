@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "resume-agent"
-version = "0.1.0"
-description = "An agent that formulates and writes a resume from user-described experience and skills."
+version = "0.2.0"
+description = "An agent that formulates and writes a resume from user-described experience and skills. Supports OpenAI-based generation."
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "Your Name" }]
 dependencies = [
   "jinja2>=3.1",
+  "openai>=1.0.0",
 ]
 
 [project.scripts]
