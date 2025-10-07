@@ -37,9 +37,29 @@ def _read_file_text(path: Path) -> str:
         return path.read_text(encoding="utf-8", errors="ignore")
 
 
-def _read_text_input(input_path: Optional[str]) -> str:
+def _read_text_input(
+    input_path: Optional[str],
+    url: Optional[str] = None,
+    auth_user: Optional[str] = None,
+    auth_pass: Optional[str] = None,
+    login_url: Optional[str] = None,
+    login_user_field: str = "username",
+    login_pass_field: str = "password",
+    login_extra: Optional[dict] = None,
+) -> str:
     if input_path:
         return _read_file_text(Path(input_path))
+    if url:
+        from .netfetch import get_text_from_url  # lazy import to avoid extra deps if unused
+        return get_text_from_url(
+            url=url,
+            auth_user=auth_user,
+            auth_pass=auth_pass,
+            login_url=login_url,
+            login_user_field=login_user_field,
+            login_pass_field=login_pass_field,
+            login_extra=login_extra or {},
+        )
     # Read from stdin until EOF (Ctrl+Z then Enter on Windows, Ctrl+D on Unix)
     return sys.stdin.read()
 
@@ -63,6 +83,19 @@ def main() -> None:
         type=str,
         default="resume.md",
         help="Where to write the generated resume (default: resume.md)",
+    )
+    # URL fetching options (optional)
+    parser.add_argument("--url", type=str, default=None, help="URL to fetch resume text from (http/https)")
+    parser.add_argument("--auth-user", type=str, default=None, help="Username for HTTP auth or login form")
+    parser.add_argument("--auth-pass", type=str, default=None, help="Password for HTTP auth or login form")
+    parser.add_argument("--login-url", type=str, default=None, help="Optional login form URL to POST credentials before fetching --url")
+    parser.add_argument("--login-user-field", type=str, default="username", help="Form field name for username (default: username)")
+    parser.add_argument("--login-pass-field", type=str, default="password", help="Form field name for password (default: password)")
+    parser.add_argument(
+        "--login-extra",
+        action="append",
+        default=None,
+        help="Additional form fields for login as key=value (repeatable)",
     )
     # OpenAI-related flags and structured fields
     parser.add_argument(
@@ -97,7 +130,25 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    text = _read_text_input(args.input)
+    # Parse extra login fields into a dict
+    login_extra: Optional[dict] = None
+    if args.login_extra:
+        login_extra = {}
+        for kv in args.login_extra:
+            if "=" in kv:
+                k, v = kv.split("=", 1)
+                login_extra[k] = v
+
+    text = _read_text_input(
+        args.input,
+        url=args.url,
+        auth_user=args.auth_user,
+        auth_pass=args.auth_pass,
+        login_url=args.login_url,
+        login_user_field=args.login_user_field,
+        login_pass_field=args.login_pass_field,
+        login_extra=login_extra,
+    )
 
     if args.use_openai:
         # Ensure API key is present in environment

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "resume-agent"
-version = "0.3.0"
-description = "An agent that formulates and writes a resume from user-described experience and skills. Supports OpenAI-based generation and DOCX/PDF input."
+version = "0.4.0"
+description = "An agent that formulates and writes a resume from user-described experience and skills. Supports OpenAI-based generation, DOCX/PDF input, and fetching from authenticated URLs."
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "Your Name" }]
@@ -14,6 +14,8 @@ dependencies = [
   "openai>=1.0.0",
   "python-docx>=0.8.11",
   "pdfminer.six>=20221105",
+  "requests>=2.31.0",
+  "beautifulsoup4>=4.12.0",
 ]
 
 [project.scripts]
