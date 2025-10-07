@@ -7,9 +7,39 @@ from typing import Optional
 from .generator import generate_resume
 
 
+def _read_file_text(path: Path) -> str:
+    if not path.exists():
+        raise FileNotFoundError(f"Input file not found: {path}")
+    ext = path.suffix.lower()
+    if ext == ".docx":
+        try:
+            from docx import Document  # type: ignore
+        except Exception as e:  # pragma: no cover
+            raise RuntimeError(
+                "Failed to import python-docx. Ensure it is installed."
+            ) from e
+        doc = Document(str(path))
+        return "\n".join(p.text for p in doc.paragraphs)
+    if ext == ".pdf":
+        try:
+            from pdfminer.high_level import extract_text  # type: ignore
+        except Exception as e:  # pragma: no cover
+            raise RuntimeError(
+                "Failed to import pdfminer.six. Ensure it is installed."
+            ) from e
+        text = extract_text(str(path))
+        return text or ""
+    # Fallback: plain text file
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        # Best-effort fallback if encoding is unknown
+        return path.read_text(encoding="utf-8", errors="ignore")
+
+
 def _read_text_input(input_path: Optional[str]) -> str:
     if input_path:
-        return Path(input_path).read_text(encoding="utf-8")
+        return _read_file_text(Path(input_path))
     # Read from stdin until EOF (Ctrl+Z then Enter on Windows, Ctrl+D on Unix)
     return sys.stdin.read()
 
